@@ -44,7 +44,7 @@ class FigureImpl implements model.Figure {
         return this._layout.columnSpan;
     }
 
-    public attach(board: model.Board) {
+    public attach(board: model.Board): boolean {
         if(this._board) {
             throw new Error("Figure already attached to a Board");
         }
@@ -52,6 +52,8 @@ class FigureImpl implements model.Figure {
         this._board = board;
         this._layout.location.column = (this._board.columns - this._layout.columnSpan) / 2;
         this._layout.update();
+
+        return this._layout.canOffset(0, 0, board);
     }
 
     public moveLeft(): boolean {
@@ -167,12 +169,30 @@ class BaseLayout implements model.Layout {
         let pattern = this.rotationPattern[angle];
         let currArray: Array<number>;
 
+        // check bounds (row & col span)
+        currArray = pattern[5];
+        let rowSpan = currArray[0];
+        let columnSpan = currArray[1];
+
+        // row bounds
+        if (this.location.row + rowSpan > board.rows) {
+            return false;
+        }
+
+        // columns bounds
+        if (this.location.column + columnSpan > board.columns) {
+            return false;
+        }
+
         let canRotate = true;
 
-        for(let i = 0; i < 4; i++) {
+        // check for occupied cells
+        for(let i = 0; i < 5; i++) {
             currArray = pattern[i];
+            let rowIndex = this.location.row + currArray[0];
+            let colIndex = this.location.column + currArray[1]; 
 
-            if (board.isOccupied(this.location.row + currArray[0], this.location.column + currArray[1])) {
+            if (board.isOccupied(rowIndex, colIndex)) {
                 canRotate = false;
                 break;
             }

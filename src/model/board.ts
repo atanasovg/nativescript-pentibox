@@ -24,10 +24,20 @@ class BoardImpl implements model.Board {
     }
     
     /**
-     * Get the occupied cell indices (in the form of rowIndex * columns + columnIndex)
+     * Get the currently occupied cells
      */
-    get occupiedCells(): {} {
-        return this._occupiedCells;
+    get occupiedCells(): Array<model.Cell> {
+        let occupied = this._occupiedCells;
+        let keys = Object.keys(occupied);
+        let result = new Array<model.Cell>(keys.length);
+        for(let i = 0; i < keys.length; i++) {
+            let index = occupied[keys[i]];
+            let colIndex = index % this._columns;
+            let rowIndex = (index - colIndex) / this._columns;
+            result[i] = { row: rowIndex, column: colIndex };
+        }
+
+        return result;
     }
 
     public isOccupied(row: number, column: number) {
@@ -42,7 +52,7 @@ class BoardImpl implements model.Board {
             delete this._occupiedCells[cellIndex];
         }
         else {
-            this._occupiedCells[cellIndex] = true;
+            this._occupiedCells[cellIndex] = cellIndex;
         }
     }
 }

@@ -1,19 +1,30 @@
 import * as observable from "data/observable";
 import * as model from "nativescript-pentibox/model";
 
+export module gameState {
+    export var initial = "initial";
+    export var running = "running";
+    export var paused = "paused";
+    export var finished = "finished";
+}
+
 export class Game extends observable.Observable {
     public static eventFigureMoved = "figureChanged";
     public static eventLinesCompleted = "linesCompleted";
+    public static eventNewFigure = "newFigure";
 
     private _board: model.Board;
     private _currFigure: model.Figure;
-    private _running: boolean;
-    private _finished: boolean;
+    private _state: string;
 
     constructor() {
         super();
 
         this._board = model.newBoard(16, 10);
+    }
+
+    get state(): string {
+        return this._state;
     }
 
     get board(): model.Board {
@@ -25,31 +36,100 @@ export class Game extends observable.Observable {
     }
 
     public start() {
-        if (this._running) {
-            throw new Error("Game already running");
+        if (this._state === gameState.running || this._state === gameState.paused) {
+            throw new Error("Game already running.");
         }
 
-        this._running = true;
-        this._finished = false;
+        this._state = gameState.running;
         this._initNewFigure();
+        this.notifyPropertyChange("state", gameState.running);
+    }
+
+    public pause() {
+        if (this._state !== gameState.running) {
+            throw new Error("May not pause a not running game.");
+        }
+
+        this._state = gameState.paused;
+        this.notifyPropertyChange("state", gameState.paused);
+    }
+
+    public resume() {
+        if (this._state !== gameState.paused) {
+            throw new Error("May not resume a not paused game.");
+        }
+
+        this._state = gameState.running;
+        this.notifyPropertyChange("state", gameState.running);
+    }
+
+    public finish() {
+        if (this._state !== gameState.running && this._state !== gameState.paused) {
+            throw new Error("May not finish a not running game.");
+        }
+
+        this._state = gameState.finished;
+        this._reset();
+        this.notifyPropertyChange("state", gameState.finished);
+    }
+
+    public moveLeft() {
+        if(this._state !== gameState.running) {
+            return;
+        }
+
+        this._move(this._currFigure.moveLeft);
+    }
+
+    public moveRight() {
+        if(this._state !== gameState.running) {
+            return;
+        }
+
+        this._move(this._currFigure.moveRight);
+    }
+
+    public moveDown() {
+        if(this._state !== gameState.running) {
+            return;
+        }
+
+        this._move(this._currFigure.moveDown);
+    }
+
+    public rotate(clockwise?: boolean) {
+        if(this._state !== gameState.running) {
+            return;
+        }
+
+        this._move(this._currFigure.rotate, clockwise);
     }
 
     public onTick() {
-        this._verifyRunning();
+        if(this._state === gameState.paused) {
+            // Game is paused, do nothing
+            return;
+        }
+
+        if (this._state !== gameState.running) {
+            throw new Error("Received onTick event for non-running game.");
+        }
 
         if (!this._currFigure) {
             this._initNewFigure();
         }
         else {
-            let moved = this.move(this._currFigure.moveDown);
+            let moved = this._move(this._currFigure.moveDown);
             if (!moved) {
-
+                // current figure may not be moved further, register its current cells as occupied in the game board
+                this._setCurrentFigureOccupied();
+                this._initNewFigure();
             }
         }
     }
 
-    private move(action: Function): boolean {
-        let moved = action.apply(this._currFigure);
+    private _move(action: Function, args?: any): boolean {
+        let moved = action.call(this._currFigure, args);
         if(moved) {
             this.notify({
                 eventName: Game.eventFigureMoved,
@@ -60,9 +140,10 @@ export class Game extends observable.Observable {
         return moved;
     }
 
-    private _verifyRunning() {
-        if (!this._running) {
-            throw new Error("Game is not running"); 
+    private _setCurrentFigureOccupied() {
+        for(let i = 0; i < this._currFigure.occupiedCells.length; i++) {
+            let cell = this._currFigure.occupiedCells[i];
+            this._board.setOccupied(cell.row, cell.column, true);
         }
     }
 
@@ -92,8 +173,22 @@ export class Game extends observable.Observable {
         }
     }
 
+    private _reset() {
+        // TODO: implement
+    }
+
     private _initNewFigure() {
         this._currFigure = model.newFigure();
-        this._currFigure.attach(this._board);
+        let attached = this._currFigure.attach(this._board);
+        if(attached) {
+            this.notify({
+                eventName: Game.eventNewFigure,
+                object: this
+            });
+        }
+
+        if (!attached) {
+            this.finish();
+        }
     }
 }

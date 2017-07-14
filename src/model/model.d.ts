@@ -9,9 +9,9 @@ declare module "nativescript-pentibox/model" {
     interface Board {
         rows: number;
         columns: number;
+        occupiedCells: Array<Cell>;
         isOccupied(row: number, column: number): boolean;
         setOccupied(row: number, column: number, occupied: boolean);
-        occupiedCells: {};
     }
 
     interface Figure {
@@ -19,7 +19,7 @@ declare module "nativescript-pentibox/model" {
         occupiedCells: Array<Cell>;
         rowSpan: number;
         columnSpan: number;
-        attach(board: Board);
+        attach(board: Board): boolean; // false if the figure spawns on already occupied cells (game over) 
         moveLeft(): boolean;
         moveRight(): boolean;
         moveDown(): boolean;
@@ -55,9 +55,25 @@ declare module "nativescript-pentibox/model" {
 
     export class Game extends observable.Observable {
         static eventFigureMoved: string;
+        static eventNewFigure: string;
         board: Board;
         currentFigure: Figure;
+        state: string;
         start(): void;
+        finish(): void;
+        pause(): void;
         onTick(): void;
+        // figure methods
+        moveLeft(): void;
+        moveRight(): void;
+        moveDown(): void;
+        rotate(clockwise?: boolean): void;
+    }
+
+    module gameState {
+        export var initial: string;
+        export var running: string;
+        export var paused: string;
+        export var stopped: string;
     }
 }

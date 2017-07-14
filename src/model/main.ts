@@ -5,3 +5,4 @@ import * as game from "./game";
 export var newFigure = figure.newFigure;
 export var newBoard = board.newBoard;
 export var Game = game.Game;
+export var gameState = game.gameState;

@@ -20,6 +20,8 @@ export class Grid extends view.View implements definition.Grid {
 
         this._game = new model.Game();
         this._game.on(model.Game.eventFigureMoved, this.onFigureMoved, this);
+        this._game.on(observable.Observable.propertyChangeEvent, this.onGameStateChanged, this);
+        this._game.on(model.Game.eventNewFigure, this.onNewFigure, this);
     }
 
     public get game(): model.Game {
@@ -37,6 +39,14 @@ export class Grid extends view.View implements definition.Grid {
     }
 
     protected onFigureMoved(data: observable.EventData) {
+
+    }
+
+    protected onGameStateChanged(data: observable.PropertyChangeData) {
+
+    }
+
+    protected onNewFigure(data: observable.EventData) {
 
     }
 }

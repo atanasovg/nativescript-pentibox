@@ -1,4 +1,10 @@
-<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="onNavigatingTo">
-  <GridLayout id="myLayout">
+<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="onNavigatingTo"
+      xmlns:pentibox="nativescript-pentibox/view">
+  <GridLayout id="myLayout" columns="50,*,50" rows="*,auto">
+      <Button text="&cularr;" col="0" row="0" verticalAlignment="bottom" tap="onRotateCCWTap"/>
+      <Button text="&larr;" col="0" row="1" verticalAlignment="bottom" tap="onLeftTap"/>
+      <pentibox:Grid col="1" rowSpan="2" id="myGame"/>
+      <Button text="&curarr;" col="2" row="0" verticalAlignment="bottom" tap="onRotateCWTap"/>
+      <Button text="&rarr;" col="2" row="1" verticalAlignment="bottom" tap="onRightTap"/>
   </GridLayout>
 </Page>

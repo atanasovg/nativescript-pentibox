@@ -21,6 +21,14 @@ export class Grid extends common.Grid {
             this._canvas.invalidateCurrFigureBounds();
         }
     }
+
+    protected onNewFigure(data: observable.EventData) {
+        super.onNewFigure(data);
+
+        if(this._canvas) {
+            this._canvas.invalidateCurrFigureBounds();
+        }
+    }
 }
 
 interface Rect {
@@ -76,37 +84,36 @@ class CanvasView extends android.view.View {
     }
 
     public invalidateCurrFigureBounds() {
-        if (!this._currFigureRenderBounds) {
-            // ensure figure is drawn at least once
-            return;
-        }
+        this.invalidate();
+        // if (!this._currFigureRenderBounds) {
+        //     // ensure figure is drawn at least once
+        //     return;
+        // }
 
-        let rect = new android.graphics.Rect(
-            this._currFigureRenderBounds.left, 
-            this._currFigureRenderBounds.top, 
-            this._currFigureRenderBounds.right,
-            this._currFigureRenderBounds.bottom);
-        this.invalidate(rect);
+        // let rect = new android.graphics.Rect(
+        //     this._currFigureRenderBounds.left, 
+        //     this._currFigureRenderBounds.top, 
+        //     this._currFigureRenderBounds.right,
+        //     this._currFigureRenderBounds.bottom);
+        // this.invalidate(rect);
     }
 
     private _drawCurrentFigure(canvas: android.graphics.Canvas) {
+        if (this._game.state !== model.gameState.running) {
+            return;
+        }
+
         let figure = this._game.currentFigure;
         let cells = figure.occupiedCells;
 
         let cell: model.Cell;
-        let left, 
-            top, 
-            right, 
-            bottom;
         for(let i = 0; i < cells.length; i++) {
             cell = cells[i];
-            left = cell.column * this._cellWidth;
-            top = cell.row * this._cellHeight;
-            canvas.drawRect(left + 1, top + 1, left + this._cellWidth - 2, top + this._cellHeight - 2, this._fill);
+            this._drawCell(canvas, cell);
         }
 
-        left = figure.location.column * this._cellWidth;
-        top = figure.location.row * this._cellHeight;
+        let left = figure.location.column * this._cellWidth;
+        let top = figure.location.row * this._cellHeight;
 
         this._currFigureRenderBounds = {
             left: left,
@@ -117,5 +124,20 @@ class CanvasView extends android.view.View {
     }
 
     private _drawOccupiedCells(canvas: android.graphics.Canvas) {
+        let occupiedCells = this._game.board.occupiedCells;
+        for(let i = 0; i < occupiedCells.length; i++) {
+            let cell = occupiedCells[i];
+            this._drawCell(canvas, cell);
+        }
+    }
+
+    private _drawCell(canvas: android.graphics.Canvas, cell: model.Cell) {
+        canvas.drawRect(
+            cell.column * this._cellWidth + 1, 
+            cell.row * this._cellHeight,
+            cell.column * this._cellWidth + this._cellWidth - 2, 
+            cell.row * this._cellHeight + this._cellHeight - 2, 
+            this._fill
+        );
     }
 }
